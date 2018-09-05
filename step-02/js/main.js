@@ -48,14 +48,14 @@ function callAction() {
   localPeerConnection.addEventListener('icecandidate', handleConnection);
   localPeerConnection.addEventListener(
     'iceconnectionstatechange', function (event) {
-      const peerConnection = event.target;
+      console.log(event.target);
     });
 
-  remotePeerConnection = new RTCPeerConnection(servers);
+  remotePeerConnection = new RTCPeerConnection(null);
   remotePeerConnection.addEventListener('icecandidate', handleConnection);
   remotePeerConnection.addEventListener(
     'iceconnectionstatechange', function (event) {
-      const peerConnection = event.target;
+      console.log(event.target);
     });
   remotePeerConnection.addEventListener('addstream', function (event) {
     const mediaStream = event.stream;
@@ -65,9 +65,7 @@ function callAction() {
 
   // Add local stream to connection and create offer to connect.
   localPeerConnection.addStream(localStream);
-  console.log('Added local stream to localPeerConnection.');
 
-  console.log('localPeerConnection createOffer start.');
   localPeerConnection.createOffer({offerToReceiveVideo: 1,})
     .then(createdOffer).catch(function (e) {console.log(e);});
 }
@@ -105,21 +103,16 @@ function handleConnection(event) {
 
 // Logs offer creation and sets peer connection session descriptions.
 function createdOffer(description) {
-  console.log(`Offer from localPeerConnection:\n${description.sdp}`);
-
-  console.log('localPeerConnection setLocalDescription start.');
   localPeerConnection.setLocalDescription(description)
     .then(() => {
       console.log("localPeerConnection");
     }).catch(function (e) {console.log(e);});
 
-  console.log('remotePeerConnection setRemoteDescription start.');
   remotePeerConnection.setRemoteDescription(description)
     .then(() => {
       console.log("remotePeerConnection");
     }).catch(function (e) {console.log(e);});
 
-  console.log('remotePeerConnection createAnswer start.');
   remotePeerConnection.createAnswer()
     .then(createdAnswer)
     .catch(function (e) {console.log(e);});
@@ -127,15 +120,11 @@ function createdOffer(description) {
 
 // Logs answer to offer creation and sets peer connection session descriptions.
 function createdAnswer(description) {
-  console.log(`Answer from remotePeerConnection:\n${description.sdp}.`);
-
-  console.log('remotePeerConnection setLocalDescription start.');
   remotePeerConnection.setLocalDescription(description)
     .then(() => {
       console.log("remotePeerConnection");
     }).catch(function (e) {console.log(e);});
 
-  console.log('localPeerConnection setRemoteDescription start.');
   localPeerConnection.setRemoteDescription(description)
     .then(() => {
       console.log("localPeerConnection");

@@ -9,7 +9,7 @@ let localStream;
 let remoteStream;
 
 let localPeerConnection;
-let remotePeerConnection;
+// let remotePeerConnection;
 
 // Define action buttons.
 const startButton = document.getElementById('startButton');
@@ -41,15 +41,14 @@ function callAction() {
   callButton.disabled = true;
   hangupButton.disabled = false;
 
-  const servers = null;  // Allows for RTC server configuration.
+  const servers = [{urls: ["stun.l.google.com:19302"]}];  // Allows for RTC server configuration.
 
   // Create peer connections and add behavior.
-  localPeerConnection = new RTCPeerConnection(null);
-  localPeerConnection.addEventListener('icecandidate', function (event) {
-    const iceCandidate = event.candidate;
+  localPeerConnection = new RTCPeerConnection(servers);
+  console.log(localPeerConnection);    const iceCandidate = event.candidate;
     if (iceCandidate) {
       const newIceCandidate = new RTCIceCandidate(iceCandidate);
-      remotePeerConnection.addIceCandidate(newIceCandidate)
+      localPeerConnection.addIceCandidate(newIceCandidate)
         .then(() => {
           console.log("ice candidate success");
         }).catch((error) => {
@@ -61,24 +60,23 @@ function callAction() {
     console.log(event.target);
   });
 
-  remotePeerConnection = new RTCPeerConnection(null);
-  remotePeerConnection.addEventListener('icecandidate', function (event) {
-    const iceCandidate = event.candidate;
-    if (iceCandidate) {
-      const newIceCandidate = new RTCIceCandidate(iceCandidate);
-      localPeerConnection.addIceCandidate(newIceCandidate)
-        .then(() => {
-          console.log("ice candidate success");
-        }).catch((error) => {
-          console.log("connection failure");
-        });
-    }
-  });
-  remotePeerConnection.addEventListener(
-    'iceconnectionstatechange', function (event) {
-      console.log(event.target);
-    });
-  remotePeerConnection.addEventListener('addstream', function (event) {
+  // remotePeerConnection = new RTCPeerConnection(servers);
+  // remotePeerConnection.addEventListener('icecandidate', function (event) {
+  //   const iceCandidate = event.candidate;
+  //   if (iceCandidate) {
+  //     const newIceCandidate = new RTCIceCandidate(iceCandidate);
+  //     remotePeerConnection.addIceCandidate(newIceCandidate)
+  //       .then(() => {
+  //         console.log("ice candidate success");
+  //       }).catch((error) => {
+  //         console.log("connection failure");
+  //       });
+  //   }
+  // });
+  // remotePeerConnection.addEventListener('iceconnectionstatechange', function (event) {
+  //     console.log(event.target);
+  //   });
+  localPeerConnection.addEventListener('addstream', function (event) {
     const mediaStream = event.stream;
     remoteVideo.srcObject = mediaStream;
     remoteStream = mediaStream;
@@ -94,11 +92,11 @@ function callAction() {
           console.log("localPeerConnection");
         }).catch(function (e) {console.log(e);});
 
-      remotePeerConnection.setRemoteDescription(description)
-        .then(() => {
-          console.log("remotePeerConnection");
-        })
-        .catch(function (e) {console.log(e);});
+      // remotePeerConnection.setRemoteDescription(description)
+      //   .then(() => {
+      //     console.log("remotePeerConnection");
+      //   })
+      //   .catch(function (e) {console.log(e);});
 
       remotePeerConnection.createAnswer()
         .then(function createdAnswer(description) {

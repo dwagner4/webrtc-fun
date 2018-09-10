@@ -45,14 +45,35 @@ function callAction() {
 
   // Create peer connections and add behavior.
   localPeerConnection = new RTCPeerConnection(null);
-  localPeerConnection.addEventListener('icecandidate', handleConnection);
-  localPeerConnection.addEventListener(
-    'iceconnectionstatechange', function (event) {
-      console.log(event.target);
-    });
+  localPeerConnection.addEventListener('icecandidate', function (event) {
+    const iceCandidate = event.candidate;
+    if (iceCandidate) {
+      const newIceCandidate = new RTCIceCandidate(iceCandidate);
+      remotePeerConnection.addIceCandidate(newIceCandidate)
+        .then(() => {
+          console.log("ice candidate success");
+        }).catch((error) => {
+          console.log("connection failure");
+        });
+    }
+  });
+  localPeerConnection.addEventListener('iceconnectionstatechange', function (event) {
+    console.log(event.target);
+  });
 
   remotePeerConnection = new RTCPeerConnection(null);
-  remotePeerConnection.addEventListener('icecandidate', handleConnection);
+  remotePeerConnection.addEventListener('icecandidate', function (event) {
+    const iceCandidate = event.candidate;
+    if (iceCandidate) {
+      const newIceCandidate = new RTCIceCandidate(iceCandidate);
+      localPeerConnection.addIceCandidate(newIceCandidate)
+        .then(() => {
+          console.log("ice candidate success");
+        }).catch((error) => {
+          console.log("connection failure");
+        });
+    }
+  });
   remotePeerConnection.addEventListener(
     'iceconnectionstatechange', function (event) {
       console.log(event.target);
@@ -67,7 +88,33 @@ function callAction() {
   localPeerConnection.addStream(localStream);
 
   localPeerConnection.createOffer({offerToReceiveVideo: 1,})
-    .then(createdOffer).catch(function (e) {console.log(e);});
+    .then(function (description) {
+      localPeerConnection.setLocalDescription(description)
+        .then(() => {
+          console.log("localPeerConnection");
+        }).catch(function (e) {console.log(e);});
+
+      remotePeerConnection.setRemoteDescription(description)
+        .then(() => {
+          console.log("remotePeerConnection");
+        })
+        .catch(function (e) {console.log(e);});
+
+      remotePeerConnection.createAnswer()
+        .then(function createdAnswer(description) {
+          remotePeerConnection.setLocalDescription(description)
+            .then(() => {
+              console.log("remotePeerConnection");
+            }).catch(function (e) {console.log(e);});
+
+          localPeerConnection.setRemoteDescription(description)
+            .then(() => {
+              console.log("localPeerConnection");
+            }).catch(function (e) {console.log(e);});
+        })
+        .catch(function (e) {console.log(e);});
+    })
+    .catch(function (e) {console.log(e);});
 }
 
 function hangupAction() {
@@ -78,55 +125,4 @@ function hangupAction() {
   hangupButton.disabled = true;
   callButton.disabled = false;
   console.log('Ending call.');
-}
-
-// Connects with new peer candidate.
-function handleConnection(event) {
-  const peerConnection = event.target;
-  const iceCandidate = event.candidate;
-
-  if (iceCandidate) {
-    const newIceCandidate = new RTCIceCandidate(iceCandidate);
-    const otherPeer = (peerConnection === localPeerConnection) ?
-        remotePeerConnection : localPeerConnection;;
-
-    otherPeer.addIceCandidate(newIceCandidate)
-      .then(() => {
-        console.log("ice candidate success");
-      }).catch((error) => {
-        console.log("connection failure");
-      });
-
-    console.log(`ICE candidate:\n` + `${event.candidate.candidate}.`);
-  }
-}
-
-// Logs offer creation and sets peer connection session descriptions.
-function createdOffer(description) {
-  localPeerConnection.setLocalDescription(description)
-    .then(() => {
-      console.log("localPeerConnection");
-    }).catch(function (e) {console.log(e);});
-
-  remotePeerConnection.setRemoteDescription(description)
-    .then(() => {
-      console.log("remotePeerConnection");
-    }).catch(function (e) {console.log(e);});
-
-  remotePeerConnection.createAnswer()
-    .then(createdAnswer)
-    .catch(function (e) {console.log(e);});
-}
-
-// Logs answer to offer creation and sets peer connection session descriptions.
-function createdAnswer(description) {
-  remotePeerConnection.setLocalDescription(description)
-    .then(() => {
-      console.log("remotePeerConnection");
-    }).catch(function (e) {console.log(e);});
-
-  localPeerConnection.setRemoteDescription(description)
-    .then(() => {
-      console.log("localPeerConnection");
-    }).catch(function (e) {console.log(e);});
 }

@@ -35,17 +35,13 @@ function startAction() {
       console.log(e);
     });
   console.log('Requesting local stream.');
-}
 
-function callAction() {
-  callButton.disabled = true;
-  hangupButton.disabled = false;
-
-  const servers = [{urls: ["stun.l.google.com:19302"]}];  // Allows for RTC server configuration.
-
-  // Create peer connections and add behavior.
+  const servers = [{urls: ["stun.l.google.com:19302"]}];
   localPeerConnection = new RTCPeerConnection(servers);
-  console.log(localPeerConnection);    const iceCandidate = event.candidate;
+  console.log("completed the RTCPeerConnection");
+  console.log(localPeerConnection);
+  localPeerConnection.addEventListener('icecandidate', function (event) {
+    const iceCandidate = event.candidate;
     if (iceCandidate) {
       const newIceCandidate = new RTCIceCandidate(iceCandidate);
       localPeerConnection.addIceCandidate(newIceCandidate)
@@ -59,67 +55,42 @@ function callAction() {
   localPeerConnection.addEventListener('iceconnectionstatechange', function (event) {
     console.log(event.target);
   });
-
-  // remotePeerConnection = new RTCPeerConnection(servers);
-  // remotePeerConnection.addEventListener('icecandidate', function (event) {
-  //   const iceCandidate = event.candidate;
-  //   if (iceCandidate) {
-  //     const newIceCandidate = new RTCIceCandidate(iceCandidate);
-  //     remotePeerConnection.addIceCandidate(newIceCandidate)
-  //       .then(() => {
-  //         console.log("ice candidate success");
-  //       }).catch((error) => {
-  //         console.log("connection failure");
-  //       });
-  //   }
-  // });
-  // remotePeerConnection.addEventListener('iceconnectionstatechange', function (event) {
-  //     console.log(event.target);
-  //   });
   localPeerConnection.addEventListener('addstream', function (event) {
     const mediaStream = event.stream;
     remoteVideo.srcObject = mediaStream;
     remoteStream = mediaStream;
   });
+  localPeerConnection.addEventListener('track', function (event) {
+    console.log("track ***********************************");
+  });
+}
 
-  // Add local stream to connection and create offer to connect.
+function callAction() {
+  callButton.disabled = true;
+  hangupButton.disabled = false;
+  console.log("localPeerConnection ******************************");
+  console.log(localPeerConnection);
+
   localPeerConnection.addStream(localStream);
 
   localPeerConnection.createOffer({offerToReceiveVideo: 1,})
     .then(function (description) {
-      localPeerConnection.setLocalDescription(description)
+      console.log("created offer");
+      console.log(description);
+      localPeerConnection.setLocalDescription(description) // Why???
         .then(() => {
+          console.log(description);
           console.log("localPeerConnection");
-        }).catch(function (e) {console.log(e);});
-
-      // remotePeerConnection.setRemoteDescription(description)
-      //   .then(() => {
-      //     console.log("remotePeerConnection");
-      //   })
-      //   .catch(function (e) {console.log(e);});
-
-      remotePeerConnection.createAnswer()
-        .then(function createdAnswer(description) {
-          remotePeerConnection.setLocalDescription(description)
-            .then(() => {
-              console.log("remotePeerConnection");
-            }).catch(function (e) {console.log(e);});
-
-          localPeerConnection.setRemoteDescription(description)
-            .then(() => {
-              console.log("localPeerConnection");
-            }).catch(function (e) {console.log(e);});
-        })
-        .catch(function (e) {console.log(e);});
-    })
-    .catch(function (e) {console.log(e);});
+          console.log(localPeerConnection);
+        }).catch(function (e) {
+          console.log(e);
+        });
+    });
 }
 
 function hangupAction() {
   localPeerConnection.close();
-  remotePeerConnection.close();
   localPeerConnection = null;
-  remotePeerConnection = null;
   hangupButton.disabled = true;
   callButton.disabled = false;
   console.log('Ending call.');

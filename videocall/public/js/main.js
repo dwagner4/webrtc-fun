@@ -9,14 +9,14 @@ let localStream;
 let remoteStream;
 
 let peerObj;
+let connectedUser = null;
 // let remotePeerConnection;
 
 // Define action buttons.
 const startButton = document.getElementById('startButton');
 const callButton = document.getElementById('callButton');
 const hangupButton = document.getElementById('hangupButton');
-const answerButton = document.getElementById('answerButton');
-const acceptButton = document.getElementById('acceptButton');
+
 
 callButton.disabled = true;
 hangupButton.disabled = true;
@@ -27,8 +27,8 @@ hangupButton.disabled = true;
 startButton.addEventListener('click', startAction);
 callButton.addEventListener('click', callAction);
 hangupButton.addEventListener('click', hangupAction);
-answerButton.addEventListener('click', answerAction);
-acceptButton.addEventListener('click', acceptAction);
+
+
 
 function startAction() {
   startButton.disabled = true;
@@ -84,11 +84,14 @@ function startAction() {
          onLogin(data.success);
          break;
       case "offer":
-         // onOffer(data.offer, data.name);
+         onOffer( data, msg.fm );
          console.log(Object.keys(data));
+         console.log(data.sdp);
+         console.log(msg.fm);
          break;
       case "answer":
-         onAnswer(data.answer);
+         // onAnswer(data.answer);
+         console.log(Object.keys(data));
          break;
       case "candidate":
          onCandidate(data.candidate);
@@ -107,28 +110,32 @@ function callAction() {
 
   peerObj.createOffer({offerToReceiveVideo: 1,})
     .then((localdescription) => {
-      let aaa = localdescription;
       console.log("created offer");
-      console.log(aaa);
-      sendMsg( aaa );
+      sendMsg( localdescription );
     });
 }
 
-function answerAction() {
-  let offerObj = JSON.parse(document.getElementById('offerspace').value);
-  peerObj.setRemoteDescription(offerObj)
-        .then(() => {
-          console.log("remotePeerConnection set from caller");
-          peerObj.createAnswer()
-              .then((description) => {
-                console.log("created answer");
-                console.log(description);
-                let descStr = JSON.stringify(description);
-                document.getElementById('answerspace').value = descStr;
-              })
-              .catch(function (e) {console.log(e);});
-        })
-        .catch(function (e) {console.log(e);});
+function onOffer( sdp, fm ) {
+  // let offerObj = JSON.parse(document.getElementById('offerspace').value);
+  console.log("in onOffer");
+  console.log(sdp)
+  connectedUser = fm;
+  // let offerInitDict = JSON.parse(sdp);
+  // console.log(offerInitDict)
+  peerObj.setRemoteDescription( sdp );
+  console.log(peerObj);
+  peerObj.createAnswer(function (answer) {
+   console.log("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+    peerObj.setLocalDescription(answer);
+    console.log("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+    console.log(answer);
+    sendMsg(answer);
+
+  }, function (error) {
+    alert("oops...error");
+  });
+
+
 }
 
 function acceptAction() {

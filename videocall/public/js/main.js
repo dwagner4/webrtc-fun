@@ -90,7 +90,7 @@ function startAction() {
          console.log(msg.fm);
          break;
       case "answer":
-         // onAnswer(data.answer);
+         onAnswer(data);
          console.log(Object.keys(data));
          break;
       case "candidate":
@@ -105,11 +105,13 @@ function startAction() {
 function callAction() {
   callButton.disabled = true;
   hangupButton.disabled = false;
+  connectedUser = document.getElementById('remoteid').value;
   console.log("peerObj ******************************");
   console.log(peerObj);
 
   peerObj.createOffer({offerToReceiveVideo: 1,})
     .then((localdescription) => {
+      peerObj.setLocalDescription(localdescription);
       console.log("created offer");
       sendMsg( localdescription );
     });
@@ -138,22 +140,11 @@ function onOffer( sdp, fm ) {
 
 }
 
-function acceptAction() {
-  let answerObj = JSON.parse(document.getElementById('answerspace').value);
-  peerObj.setRemoteDescription(answerObj)
-        .then(() => {
-          console.log("answer set from caller");
-          // peerObj.createAnswer()
-          //     .then((description) => {
-          //       console.log("created answer");
-          //       console.log(description);
-          //       let descStr = JSON.stringify(description);
-          //       document.getElementById('answerspace').value = descStr;
-          //     })
-          //     .catch(function (e) {console.log(e);});
-        })
-        .catch(function (e) {console.log(e);});
+//when another user answers to our offer
+function onAnswer(answer) {
+   peerObj.setRemoteDescription(answer);
 }
+
 
 function hangupAction() {
   peerObj.close();
@@ -166,11 +157,10 @@ function hangupAction() {
 function sendMsg(msg) {
   console.log("************************************************");
   console.log(msg);
-  var remotenode = document.getElementById('remoteid').value;
   var localnode = document.getElementById('localid').value;
   var nodeparams = {"msg": JSON.stringify(msg)}
   nodeparams.fm = localnode;
-  var messageListRef = firebase.database().ref('message_list/' + remotenode);
+  var messageListRef = firebase.database().ref('message_list/' + connectedUser);
   var newMessageRef = messageListRef.push();
   newMessageRef.set(nodeparams)
       .then(function (e) {console.log("pushed it to firebase");})

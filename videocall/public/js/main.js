@@ -33,24 +33,24 @@ function startAction() {
   peerObj = new RTCPeerConnection(servers);
   videoButton.disabled = false;  // Enable call button.
   console.log("completed the RTCPeerConnection");
+  console.log(peerObj);
+  logit("completed the RTCPeerConnection object, " + peerObj.localDescription.type);
+  let stateText = "iceconnectionstatechange" +
+      "</br>iceConnectionState => " + peerObj.iceConnectionState +
+      "</br>iceGatheringState => " + peerObj.iceGatheringState +
+      "</br>localDescription => " + peerObj.localDescription.type +
+      "</br>";
+  logit(stateText);
+
 
   peerObj.addEventListener('icecandidate', function (event) {
     const iceCandidate = event.candidate;
     if (iceCandidate) {
       console.log(iceCandidate);
+      logit(iceCandidate.candidate);
       iceCandidate.type = "candidate";
       sendMsg({"type": "candidate", "iceCan": iceCandidate});
     }
-  });
-  peerObj.addEventListener('iceconnectionstatechange', function (event) {
-    console.log(event.target);
-    logit('iceconnectionstatechange' + " " + Object.keys(event));
-  });
-  peerObj.addEventListener('onsignalingstatechange', function (event) {
-    logit('onsignalingstatechange' + " " + Object.keys(event));
-  });
-  peerObj.addEventListener('onconnectionstatechange', function (event) {
-    logit('onconnectionstatechange' + " " + Object.keys(event));
   });
   peerObj.addEventListener('addstream', function (event) {
     const mediaStream = event.stream;
@@ -60,6 +60,48 @@ function startAction() {
   peerObj.addEventListener('track', function (event) {
     console.log("track ***********************************");
   });
+
+  peerObj.addEventListener('iceconnectionstatechange', function (event) {
+    console.log(event.target);
+    let stateText = "iceconnectionstatechange" +
+        "</br>iceConnectionState => " + event.target.iceConnectionState +
+        "</br>iceGatheringState => " + event.target.iceGatheringState +
+        "</br>localDescription => " + event.target.localDescription.type +
+        "</br>";
+    logit(stateText);
+  });
+  peerObj.addEventListener('onsignalingstatechange', function (event) {
+    logit('onsignalingstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onconnectionstatechange', function (event) {
+    logit('onconnectionstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onicegatheringstatechange', function (event) {
+    logit('onicegatheringstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onidentityresult', function (event) {
+    logit('onidentityresult' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onidpassertionerror', function (event) {
+    logit('onidpassertionerror' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onidpvalidationerror', function (event) {
+    logit('onidpvalidationerror' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onnegotiationneeded', function (event) {
+    logit('onnegotiationneeded' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onpeeridentity', function (event) {
+    logit('onpeeridentity' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onremovestream', function (event) {
+    logit('onremovestream' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onsignalingstatechange', function (event) {
+    logit('onsignalingstatechange' + " " + Object.keys(event));
+  });
+
+
 
   var localnode = document.getElementById('localid').value;
   var ref = firebase.database().ref('message_list/' + localnode);

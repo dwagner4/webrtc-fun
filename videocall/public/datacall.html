@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>Realtime communication with WebRTC</title>
+
+  <link rel="stylesheet" href="css/main.css" />
+
+</head>
+
+<body>
+
+  <h1>Realtime communication with WebRTC</h1>
+
+  <textarea id="dataChannelSend" disabled
+    placeholder="Press Start, enter some text, then press Send."></textarea>
+  <textarea id="dataChannelReceive" disabled></textarea>
+
+  <div id="buttons">
+    <button id="startButton">Start</button> <input id="localid"><br><br>
+    <button id="callButton">Call</button>  <input id="remoteid"><br><br>
+
+    <button id="sendButton">Send</button>  <br><br>
+    <button id="closeButton">Stop</button>
+  </div>
+
+
+  <script src="https://www.gstatic.com/firebasejs/5.4.2/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyALsYPkLlYb6DA6CGicpVfaermYDJS4UhY",
+      authDomain: "webrtc-fun.firebaseapp.com",
+      databaseURL: "https://webrtc-fun.firebaseio.com",
+      projectId: "webrtc-fun",
+      storageBucket: "webrtc-fun.appspot.com",
+      messagingSenderId: "1003529738271"
+    };
+    firebase.initializeApp(config);
+  </script>
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <script src="js/datamain.js"></script>
+
+</body>
+
+</html>

@@ -13,13 +13,16 @@ let connectedUser = null;
 
 // Define action buttons.
 const startButton = document.getElementById('startButton');
+const videoButton = document.getElementById('videoButton');
 const callButton = document.getElementById('callButton');
 const hangupButton = document.getElementById('hangupButton');
 
+videoButton.disabled = true;
 callButton.disabled = true;
 hangupButton.disabled = true;
 
 startButton.addEventListener('click', startAction);
+videoButton.addEventListener('click', videoAction);
 callButton.addEventListener('click', callAction);
 hangupButton.addEventListener('click', hangupAction);
 
@@ -28,17 +31,7 @@ function startAction() {
   startButton.disabled = true;
   const servers = [{urls: ["stun.l.google.com:19302"]}];
   peerObj = new RTCPeerConnection(servers);
-  console.log('Requesting local stream.');
-  navigator.mediaDevices.getUserMedia({video: true,})
-    .then(function (mediaStream) {
-      localVideo.srcObject = mediaStream;
-      localStream = mediaStream;
-      callButton.disabled = false;  // Enable call button.
-      peerObj.addStream(localStream);
-    })
-    .catch(function (e){
-      console.log(e);
-    });
+  videoButton.disabled = false;  // Enable call button.
   console.log("completed the RTCPeerConnection");
 
   peerObj.addEventListener('icecandidate', function (event) {
@@ -47,20 +40,17 @@ function startAction() {
       console.log(iceCandidate);
       iceCandidate.type = "candidate";
       sendMsg({"type": "candidate", "iceCan": iceCandidate});
-      // sendMsg(iceCandidate);
-      // const newIceCandidate = new RTCIceCandidate(iceCandidate);
-      // let condidateMsg = {"type": "candidate", "msg": iceCandidate}
-      // sendMsg(iceCandidate);
-      // peerObj.addIceCandidate(newIceCandidate)
-      //   .then(() => {
-      //     console.log("ice candidate success");
-      //   }).catch((error) => {
-      //     console.log("connection failure");
-      //   });
     }
   });
   peerObj.addEventListener('iceconnectionstatechange', function (event) {
     console.log(event.target);
+    logit('iceconnectionstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onsignalingstatechange', function (event) {
+    logit('onsignalingstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onconnectionstatechange', function (event) {
+    logit('onconnectionstatechange' + " " + Object.keys(event));
   });
   peerObj.addEventListener('addstream', function (event) {
     const mediaStream = event.stream;
@@ -100,6 +90,21 @@ function startAction() {
   });
 }
 
+function videoAction() {
+  console.log('Requesting local stream.');
+  videoButton.disabled = true;
+  navigator.mediaDevices.getUserMedia({video: true,})
+    .then(function (mediaStream) {
+      localVideo.srcObject = mediaStream;
+      localStream = mediaStream;
+      callButton.disabled = false;  // Enable call button.
+      peerObj.addStream(localStream);
+    })
+    .catch(function (e){
+      console.log(e);
+    });
+}
+
 function callAction() {
   callButton.disabled = true;
   hangupButton.disabled = false;
@@ -113,6 +118,8 @@ function callAction() {
 }
 
 function onOffer( sdp, fm ) {
+  callButton.disabled = true;
+  hangupButton.disabled = false;
   console.log("in onOffer");
   connectedUser = fm;
   peerObj.setRemoteDescription( sdp );
@@ -130,14 +137,6 @@ function onAnswer(answer) {
    peerObj.setRemoteDescription(answer);
 }
 
-function hangupAction() {
-  peerObj.close();
-  peerObj = null;
-  hangupButton.disabled = true;
-  callButton.disabled = false;
-  console.log('Ending call.');
-}
-
 function onCandidate(data) {
   const newIceCandidate = new RTCIceCandidate(data.iceCan);
   peerObj.addIceCandidate(newIceCandidate)
@@ -146,6 +145,18 @@ function onCandidate(data) {
     }).catch((error) => {
       console.log("connection failure");
     });
+}
+
+function hangupAction() {
+  peerObj.close();
+  peerObj = null;
+  localVideo.srcObject = null;
+  localStream = null;
+  remoteVideo.srcObject = null;
+  remoteStream = null;
+  hangupButton.disabled = true;
+  startButton.disabled = false;
+  console.log('Ending call.');
 }
 
 function sendMsg(msg) {
@@ -157,4 +168,12 @@ function sendMsg(msg) {
   newMessageRef.set(nodeparams)
       .then(function (e) {console.log("pushed it to firebase");})
       .catch(function (e) {console.log(e);});
+}
+
+function logit(text) {
+  let timestamp = Date.now();
+  let logarea = document.getElementById('logarea');
+  let newPara = document.createElement('p');
+  newPara.innerHTML = timestamp + " " + text;
+  logarea.appendChild(newPara);
 }

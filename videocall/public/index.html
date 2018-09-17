@@ -7,23 +7,19 @@
 </head>
 
 <body>
-  <h1>Realtime communication with WebRTC</h1>
+  <h1>Dean's WebRTC</h1>
 
   <video id="localVideo" autoplay playsinline></video>
   <video id="remoteVideo" autoplay playsinline></video>
 
   <div>
-    <button id="startButton">Start</button>  <input id="localid"><br>
-    <button id="callButton">Call</button>  <input id="remoteid"><br>
+    <button id="startButton">Start</button>  <input id="localid"><br><br>
+    <button id="videoButton">Video</button> <br><br>
+    <button id="callButton">Call</button>  <input id="remoteid"><br><br>
     <button id="hangupButton">Hang Up</button>
   </div>
-  <h3>Offer</h3>
-  <p>basically the Calling peer RTCSessionDescription </p>
-  <textarea id="offerspace"></textarea><button id="answerButton">Answer</button>
-  <h3>Offer Input</h3>
-  <p>basically the remote peer RTCSessionDescription </p>
-  <textarea id="answerspace"></textarea><button id="acceptButton">Accept Answer</button>
 
+  <div id="logarea"><div>
 
   <script src="https://www.gstatic.com/firebasejs/5.4.2/firebase.js"></script>
   <script>

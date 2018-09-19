@@ -1,33 +1,57 @@
 'use strict';
 
-var peerObj;
-var sendChannel;
-var receiveChannel;
-var pcConstraint = null;
-var dataConstraint = null;
-var dataChannelSend = document.querySelector('textarea#dataChannelSend');
-var dataChannelReceive = document.querySelector('textarea#dataChannelReceive');
-var startButton = document.querySelector('button#startButton');
-var sendButton = document.querySelector('button#sendButton');
-var closeButton = document.querySelector('button#closeButton');
 
-const callButton = document.getElementById('callButton');
+// Define peer connections, streams and video elements.
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+const sendText = document.getElementById('sendtext');
+const recvText = document.getElementById('recvtext');
 
+let localStream;
+let remoteStream;
 
+let peerObj;
 let connectedUser = null;
 
-dataChannelSend.placeholder = '';
+// Define action buttons.
+const startButton = document.getElementById('startButton');
+const videoButton = document.getElementById('videoButton');
+const callButton = document.getElementById('callButton');
+const hangupButton = document.getElementById('hangupButton');
+const textButton = document.getElementById('textButton');
+const sendTextButton = document.getElementById('sendtextButton');
 
-startButton.onclick = startAction;
-sendButton.onclick = sendData;
-closeButton.onclick = closeDataChannels;
+videoButton.disabled = true;
+callButton.disabled = true;
+hangupButton.disabled = true;
+textButton.disabled = true;
+sendTextButton.disabled = true;
 
+startButton.addEventListener('click', startAction);
+videoButton.addEventListener('click', videoAction);
 callButton.addEventListener('click', callAction);
+hangupButton.addEventListener('click', hangupAction);
+textButton.addEventListener('click', textAction);;
+sendTextButton.addEventListener('click', sendTextAction);
+
 
 function startAction() {
   startButton.disabled = true;
   const servers = [{urls: ["stun.l.google.com:19302"]}];
   peerObj = new RTCPeerConnection(servers);
+  videoButton.disabled = false;  // Enable call button.
+  textButton.disabled = false;  // Enable call button.
+  console.log("completed the RTCPeerConnection");
+  console.log(peerObj);
+  logit("completed the RTCPeerConnection object, " + peerObj.localDescription.type);
+  let stateText = "iceconnectionstatechange" +
+      "</br>iceConnectionState => " + peerObj.iceConnectionState +
+      "</br>iceGatheringState => " + peerObj.iceGatheringState +
+      "</br>localDescription => " + peerObj.localDescription.type +
+      "</br>";
+  logit(stateText);
+
+
   peerObj.addEventListener('icecandidate', function (event) {
     const iceCandidate = event.candidate;
     if (iceCandidate) {
@@ -37,18 +61,55 @@ function startAction() {
       sendMsg({"type": "candidate", "iceCan": iceCandidate});
     }
   });
-  peerObj.ondatachannel = function (event) {
-    trace('Receive Channel Callback');
-    receiveChannel = event.channel;
-    receiveChannel.onmessage = onReceiveMessageCallback;
-    receiveChannel.onopen = onReceiveChannelStateChange;
-    receiveChannel.onclose = onReceiveChannelStateChange;
-  };
+  peerObj.addEventListener('addstream', function (event) {
+    const mediaStream = event.stream;
+    remoteVideo.srcObject = mediaStream;
+    remoteStream = mediaStream;
+  });
+  peerObj.addEventListener('track', function (event) {
+    console.log("track ***********************************");
+  });
 
-  // sendChannel = peerObj.createDataChannel('sendDataChannel',
-  //     dataConstraint);
-  // sendChannel.onopen = onSendChannelStateChange;
-  // sendChannel.onclose = onSendChannelStateChange;
+  peerObj.addEventListener('iceconnectionstatechange', function (event) {
+    console.log(event.target);
+    let stateText = "iceconnectionstatechange" +
+        "</br>iceConnectionState => " + event.target.iceConnectionState +
+        "</br>iceGatheringState => " + event.target.iceGatheringState +
+        "</br>localDescription => " + event.target.localDescription.type +
+        "</br>";
+    logit(stateText);
+  });
+  peerObj.addEventListener('onsignalingstatechange', function (event) {
+    logit('onsignalingstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onconnectionstatechange', function (event) {
+    logit('onconnectionstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onicegatheringstatechange', function (event) {
+    logit('onicegatheringstatechange' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onidentityresult', function (event) {
+    logit('onidentityresult' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onidpassertionerror', function (event) {
+    logit('onidpassertionerror' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onidpvalidationerror', function (event) {
+    logit('onidpvalidationerror' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onnegotiationneeded', function (event) {
+    logit('onnegotiationneeded' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onpeeridentity', function (event) {
+    logit('onpeeridentity' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onremovestream', function (event) {
+    logit('onremovestream' + " " + Object.keys(event));
+  });
+  peerObj.addEventListener('onsignalingstatechange', function (event) {
+    logit('onsignalingstatechange' + " " + Object.keys(event));
+  });
+
 
 
   var localnode = document.getElementById('localid').value;
@@ -77,35 +138,39 @@ function startAction() {
       default:
          break;
     }
-
-  // peerObj.createOffer().then(
-  //   function (desc) {
-  //     peerObj.setLocalDescription(desc);
-  //     trace('Offer from peerObj \n' + desc.sdp);
-  //     remoteConnection.setRemoteDescription(desc);
-  //     remoteConnection.createAnswer().then(
-  //       function (desc) {
-  //         remoteConnection.setLocalDescription(desc);
-  //         trace('Answer from remoteConnection \n' + desc.sdp);
-  //         peerObj.setRemoteDescription(desc);
-  //       },
-  //       onCreateSessionDescriptionError
-  //     );
-  //   },
-  //   onCreateSessionDescriptionError
-  // );
-    startButton.disabled = true;
-    closeButton.disabled = false;
   });
 }
 
-// function onCreateSessionDescriptionError(error) {
-//   trace('Failed to create session description: ' + error.toString());
-// }
+function videoAction() {
+  console.log('Requesting local stream.');
+  videoButton.disabled = true;
+  navigator.mediaDevices.getUserMedia({video: true,})
+    .then(function (mediaStream) {
+      localVideo.srcObject = mediaStream;
+      localStream = mediaStream;
+      callButton.disabled = false;  // Enable call button.
+      peerObj.addStream(localStream);
+    })
+    .catch(function (e){
+      console.log(e);
+    });
+}
+
+function textAction() {
+  alert("textAction");
+  textButton.disabled = true;
+  sendTextButton.disabled = false;
+}
+
+function sendTextAction(text) {
+  alert("sendTextAction");
+}
 
 function callAction() {
+  callButton.disabled = true;
+  hangupButton.disabled = false;
   connectedUser = document.getElementById('remoteid').value;
-  peerObj.createOffer()
+  peerObj.createOffer({offerToReceiveVideo: 1,})
     .then((localdescription) => {
       peerObj.setLocalDescription(localdescription);
       console.log("created offer");
@@ -131,114 +196,28 @@ function onOffer( sdp, fm ) {
 //when another user answers to our offer
 function onAnswer(answer) {
    peerObj.setRemoteDescription(answer);
-   sendChannel = peerObj.createDataChannel('sendDataChannel',
-       dataConstraint);
-   sendChannel.onopen = onSendChannelStateChange;
-   sendChannel.onclose = onSendChannelStateChange;
 }
 
-
-//   peerObj.createOffer().then(
-//     function (desc) {
-//       peerObj.setLocalDescription(desc);
-//       trace('Offer from peerObj \n' + desc.sdp);
-//       remoteConnection.setRemoteDescription(desc);
-//       remoteConnection.createAnswer().then(
-//         function (desc) {
-//           remoteConnection.setLocalDescription(desc);
-//           trace('Answer from remoteConnection \n' + desc.sdp);
-//           peerObj.setRemoteDescription(desc);
-//         },
-//         function (error) {
-//           trace('Failed to create session description: ' + error.toString());
-//         }
-//       );
-//     },
-//     function (error) {
-//       trace('Failed to create session description: ' + error.toString());
-//     }
-//   );
-// }
-
-function sendData() {
-  var data = dataChannelSend.value;
-  sendChannel.send(data);
-  trace('Sent Data: ' + data);
+function onCandidate(data) {
+  const newIceCandidate = new RTCIceCandidate(data.iceCan);
+  peerObj.addIceCandidate(newIceCandidate)
+    .then(() => {
+      console.log("ice candidate success");
+    }).catch((error) => {
+      console.log("connection failure");
+    });
 }
 
-function closeDataChannels() {
-  sendChannel.close();
+function hangupAction() {
   peerObj.close();
   peerObj = null;
-  trace('Closed peer connections');
+  localVideo.srcObject = null;
+  localStream = null;
+  remoteVideo.srcObject = null;
+  remoteStream = null;
+  hangupButton.disabled = true;
   startButton.disabled = false;
-  sendButton.disabled = true;
-  closeButton.disabled = true;
-  dataChannelSend.value = '';
-  dataChannelReceive.value = '';
-  dataChannelSend.disabled = true;
-  sendButton.disabled = true;
-  startButton.disabled = false;;
-}
-
-
-
-
-
-
-
-// function iceCallback2(event) {
-//   trace('remote ice callback');
-//   if (event.candidate) {
-//     peerObj.addIceCandidate(
-//       event.candidate
-//     ).then(
-//       onAddIceCandidateSuccess,
-//       onAddIceCandidateError
-//     );
-//     trace('Remote ICE candidate: \n ' + event.candidate.candidate);
-//   }
-// }
-
-function onAddIceCandidateSuccess() {
-  trace('AddIceCandidate success.');
-}
-
-function onAddIceCandidateError(error) {
-  trace('Failed to add Ice Candidate: ' + error.toString());
-}
-
-function receiveChannelCallback(event) {
-  trace('Receive Channel Callback');
-  receiveChannel = event.channel;
-  receiveChannel.onmessage = onReceiveMessageCallback;
-  receiveChannel.onopen = onReceiveChannelStateChange;
-  receiveChannel.onclose = onReceiveChannelStateChange;
-}
-
-function onReceiveMessageCallback(event) {
-  trace('Received Message');
-  dataChannelReceive.value = event.data;
-}
-
-function onSendChannelStateChange() {
-  var readyState = sendChannel.readyState;
-  trace('Send channel state is: ' + readyState);
-  if (readyState === 'open') {
-    dataChannelSend.disabled = false;
-    dataChannelSend.focus();
-    sendButton.disabled = false;
-    closeButton.disabled = false;
-  } else {
-    dataChannelSend.disabled = true;
-    sendButton.disabled = true;
-    closeButton.disabled = true;
-  }
-}
-
-function onReceiveChannelStateChange() {
-  var readyState = receiveChannel.readyState;
-  trace('Receive channel state is: ' + readyState);
+  console.log('Ending call.');
 }
 
 function sendMsg(msg) {
@@ -250,4 +229,12 @@ function sendMsg(msg) {
   newMessageRef.set(nodeparams)
       .then(function (e) {console.log("pushed it to firebase");})
       .catch(function (e) {console.log(e);});
+}
+
+function logit(text) {
+  let timestamp = Date.now();
+  let logarea = document.getElementById('logarea');
+  let newPara = document.createElement('p');
+  newPara.innerHTML = timestamp + " " + text;
+  logarea.appendChild(newPara);
 }

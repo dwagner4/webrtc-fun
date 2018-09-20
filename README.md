@@ -1,26 +1,7 @@
 # Realtime communication with WebRTC
 
-This code has the resources you need for the codelab [Realtime communication with WebRTC](https://codelabs.developers.google.com/codelabs/webrtc-web/#0).
+This uses a firebase Database as a signaling server.  Inspired by the technical literature that said we could use carrier pigeon (although latency may be an issue)
 
-This is a work in progress. If you find a mistake or have a suggestion, please [file an issue](https://github.com/googlecodelabs/webrtc-web/issues). Thanks!
+Frankly it is having problems with connecting.  It will link between two devices on my wifi.  Like my phone and a chromebook while being served from a firebase hosting site.
 
-## What you'll learn
-* Get video from your webcam
-* Stream video with RTCPeerConnection
-* Stream data with RTCDataChannel
-* Set up a signaling service to exchange messages
-* Combine peer connection and signaling
-* Take a photo and share it via a data channel
-
-
-## What you'll need
-* Chrome 47 or above.
-* Web Server for Chrome, or use your own web server of choice.
-* The sample code.
-* A text editor.
-* Basic knowledge of HTML, CSS and JavaScript, Node.JS.
-
-
-## For 'step-04', 'step-05', 'step-06'
-
-Run `npm install` before running the code.
+I have not sent audion or data yet.
